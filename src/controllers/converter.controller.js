@@ -1,8 +1,6 @@
 const converterService = require("../services/converter.service");
 
 exports.convert = async (req, res, next) => {
-  console.log("req.files", req.files);
-  console.log("req.body", req.body);
   try {
     const result = converterService.convert({
       masterFile: req.files.master[0].path,

@@ -5,6 +5,7 @@ const app = require("./app");
 const { PORT, DB_DATABASE } = process.env;
 
 const mysqlConfig = require("./config/mysqlConfig");
+const printRouter = require("./utils/routeLogger");
 
 let dbStatus = "disconnected";
 // connect main DB

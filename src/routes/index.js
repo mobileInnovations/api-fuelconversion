@@ -10,7 +10,7 @@ const userRoutes = require("./user.routes");
 const converterRoutes = require("./converter.routes");
 
 router.use("/auth", authRoutes);
-router.use(authMiddleware); // Apply authentication middleware to all routes
+// router.use(authMiddleware); // Apply authentication middleware to all routes
 router.use("/companies", companyRoutes);
 router.use("/converter", converterRoutes);
 router.use("/users", userRoutes);

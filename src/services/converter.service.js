@@ -20,11 +20,6 @@ class ConverterService {
     outputFile,
     vehicleField = "vehicleNumber",
   }) {
-    console.log(`\n🔄 Converting Fleet to CSV`);
-    console.log(`Master File: ${masterFile}`);
-    console.log(`Fleet File: ${fleetFile}`);
-    console.log(`Output File: ${outputFile}`);
-
     const master = this.readMaster(masterFile);
     const fleet = this.readFleet(fleetFile);
 
@@ -124,11 +119,7 @@ class ConverterService {
         // Skip invalid row
         if (!date || !time || !cardNumber) continue;
 
-        console.log("Fleet Card:", cardNumber);
-
         const master = masterMap.get(cardNumber);
-
-        console.log("Found:", master);
 
         if (!master) {
           missingCards.push({

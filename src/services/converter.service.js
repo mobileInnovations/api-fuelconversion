@@ -85,7 +85,7 @@ class ConverterService {
       if (!cardNumber) continue;
 
       if (map.has(cardNumber)) {
-        console.warn(`Duplicate CardNumber: ${cardNumber}`);
+        throw new Error(`Duplicate CardNumber: ${cardNumber}`);
       }
 
       map.set(cardNumber, {

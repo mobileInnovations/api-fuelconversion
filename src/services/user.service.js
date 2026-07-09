@@ -68,6 +68,12 @@ exports.getUserById = async (userId) => {
   return rows[0];
 };
 
+exports.getAllUsers = async () => {
+  const sql = "SELECT * FROM users";
+  const rows = await db.query(sql);
+  return rows;
+};
+
 exports.updatePassword = async (userId, currentPassword, newPassword) => {
   // 1. ดึง password เดิม
   const [[user]] = await db.query(
@@ -121,82 +127,12 @@ exports.updatePassword = async (userId, currentPassword, newPassword) => {
   }
 };
 
-exports.setUserActiveStatus = async (userId, isActive) => {
-  // 1. ดึงสถานะปัจจุบัน
-  const [[user]] = await db.query("SELECT is_active FROM users WHERE id = ?", [
-    userId,
-  ]);
-
-  if (!user) {
-    const error = new Error("User not found");
-    error.code = "USER_NOT_FOUND";
-    throw error;
-  }
-
-  // 2. เช็คสถานะซ้ำ
-  if (user.is_active === isActive) {
-    const error = new Error("User status is already the same");
-    error.code = "STATUS_SAME";
-    throw error;
-  }
-
-  // 3. update
-  const now = new Date();
-  const result = await db.query(
-    `
-    UPDATE users
-    SET is_active = ?, updated_at = ?
-    WHERE id = ?
-    `,
-    [isActive, now, userId],
-  );
-
-  if (result.affectedRows === 0) {
-    throw new Error("User status update failed");
-  }
-};
-
 exports.deleteUser = async (userId) => {
   const sql = `
     DELETE FROM users
     WHERE id = ?
   `;
   await db.query(sql, [userId]);
-};
-
-exports.getAllUsers = async () => {
-  const sql = `
-    SELECT id, username, is_active, created_at, updated_at, password_changed_at, last_login_at
-    FROM users
-  `;
-  const rows = await db.query(sql);
-  return rows;
-};
-
-exports.countUsers = async () => {
-  const sql = "SELECT COUNT(*) AS count FROM users";
-  const rows = await db.query(sql);
-  return rows[0].count;
-};
-
-exports.countActiveUsers = async () => {
-  const sql = "SELECT COUNT(*) AS count FROM users WHERE is_active = 1";
-  const rows = await db.query(sql);
-  return rows[0].count;
-};
-
-exports.countInactiveUsers = async () => {
-  const sql = "SELECT COUNT(*) AS count FROM users WHERE is_active = 0";
-  const rows = await db.query(sql);
-  return rows[0].count;
-};
-
-exports.verifyPassword = async (username, password) => {
-  const user = await this.getUserByUsername(username);
-  if (!user) {
-    return false;
-  }
-  return await bcrypt.compare(password, user.password_hash);
 };
 
 exports.changeUsername = async (userId, newUsername) => {
@@ -244,26 +180,6 @@ exports.changeUsername = async (userId, newUsername) => {
   if (result.affectedRows === 0) {
     throw new Error("Update failed");
   }
-};
-
-exports.getUsersCreatedAfter = async (date) => {
-  const sql = `
-    SELECT id, username, is_active, created_at, updated_at, password_changed_at 
-    FROM users
-    WHERE created_at > ?
-  `;
-  const rows = await db.query(sql, [date]);
-  return rows;
-};
-
-exports.getUsersUpdatedBefore = async (date) => {
-  const sql = `
-    SELECT id, username, is_active, created_at, updated_at, password_changed_at 
-    FROM users
-    WHERE updated_at < ?
-  `;
-  const rows = await db.query(sql, [date]);
-  return rows;
 };
 
 exports.deleteUserById = async (userId) => {

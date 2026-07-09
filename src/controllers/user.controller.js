@@ -192,31 +192,10 @@ exports.getAllUsers = async (req, res) => {
     const users = await userService.getAllUsers();
     res.status(200).json({
       success: true,
-      data: users,
+      data: { count: users.length, users },
     });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
-  }
-};
-
-exports.verifyPassword = async (req, res) => {
-  try {
-    const { username, password } = req.body;
-    if (!username || !password) {
-      return res.status(400).json({
-        success: false,
-        message: "username and password are required",
-      });
-    }
-    const isValid = await userService.verifyPassword(username, password);
-    res.status(200).json({
-      success: true,
-      data: { isValid },
-    });
-  } catch (error) {
+    console.error("Error fetching users:", error);
     res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -236,14 +215,7 @@ exports.getUserByUsername = async (req, res) => {
     }
     res.status(200).json({
       success: true,
-      data: {
-        id: user.id,
-        username: user.username,
-        isActive: user.is_active,
-        createdAt: user.created_at,
-        updatedAt: user.updated_at,
-        passwordChangedAt: user.password_changed_at,
-      },
+      data: user,
     });
   } catch (error) {
     res.status(500).json({

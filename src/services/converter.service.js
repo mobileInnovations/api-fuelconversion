@@ -2,6 +2,11 @@ const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 
+const dayjs = require("dayjs");
+const customParseFormat = require("dayjs/plugin/customParseFormat");
+
+dayjs.extend(customParseFormat);
+
 const FLEET_COLUMNS = {
   DATE: 5, // F
   TIME: 6, // G
@@ -111,8 +116,17 @@ class ConverterService {
 
         if (!row || row.length === 0) continue;
 
-        const date = row[FLEET_COLUMNS.DATE];
-        const time = row[FLEET_COLUMNS.TIME];
+        const rawDate = String(row[FLEET_COLUMNS.DATE] || "").trim();
+        const rawTime = String(row[FLEET_COLUMNS.TIME] || "").trim();
+
+        const date = rawDate
+          ? dayjs(rawDate, "DD/MM/YYYY", true).format("YYYY-MM-DD")
+          : "";
+
+        const time = rawTime
+          ? dayjs(rawTime, "HH:mm:ss", true).format("HH:mm:ss")
+          : "";
+
         const cardNumber = String(row[FLEET_COLUMNS.CARD_NUMBER] || "").trim();
         const amount = String(
           Math.floor(row[FLEET_COLUMNS.AMOUNT] * 100) || 0,

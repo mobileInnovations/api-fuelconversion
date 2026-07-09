@@ -1,3 +1,4 @@
+const fs = require("fs");
 const path = require("path");
 const converterService = require("../services/converter.service");
 
@@ -15,7 +16,18 @@ exports.convert = async (req, res, next) => {
       vehicleField,
     });
 
-    return res.download(result.outputFile, fileName);
+    res.download(result.outputFile, fileName, (err) => {
+      // Remove generated CSV after download
+      fs.unlink(result.outputFile, (unlinkErr) => {
+        if (unlinkErr) {
+          console.error("Failed to delete file:", unlinkErr);
+        }
+      });
+
+      if (err) {
+        return next(err);
+      }
+    });
   } catch (err) {
     next(err);
   }

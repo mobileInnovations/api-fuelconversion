@@ -44,6 +44,7 @@ class ConverterService {
       missingRows: missingCards.length,
       missingCards,
       outputFile,
+      fileName: path.basename(outputFile),
     };
   }
 
@@ -123,7 +124,11 @@ class ConverterService {
         // Skip invalid row
         if (!date || !time || !cardNumber) continue;
 
+        console.log("Fleet Card:", cardNumber);
+
         const master = masterMap.get(cardNumber);
+
+        console.log("Found:", master);
 
         if (!master) {
           missingCards.push({

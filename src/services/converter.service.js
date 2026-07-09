@@ -2,6 +2,14 @@ const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
 
+const FLEET_COLUMNS = {
+  DATE: 5, // F
+  TIME: 6, // G
+  VEHICLE_NUMBER: 7, // H
+  CARD_NUMBER: 8, // I
+  AMOUNT: 26, // AA
+};
+
 class ConverterService {
   /**
    * Main Function
@@ -12,12 +20,17 @@ class ConverterService {
     outputFile,
     vehicleField = "vehicleNumber",
   }) {
+    console.log(`\n🔄 Converting Fleet to CSV`);
+    console.log(`Master File: ${masterFile}`);
+    console.log(`Fleet File: ${fleetFile}`);
+    console.log(`Output File: ${outputFile}`);
+
     const master = this.readMaster(masterFile);
     const fleet = this.readFleet(fleetFile);
 
     const masterMap = this.buildMasterMap(master);
 
-    const rows = this.convertRows({
+    const { rows, missingCards } = this.convertRows({
       fleet,
       masterMap,
       vehicleField,
@@ -26,13 +39,16 @@ class ConverterService {
     this.exportCsv(rows, outputFile);
 
     return {
-      total: rows.length,
+      totalRows: fleet.length - 1,
+      convertedRows: rows.length,
+      missingRows: missingCards.length,
+      missingCards,
       outputFile,
     };
   }
 
   /**
-   * Read Master Excel
+   * Read Master Excel (.xlsx)
    */
   readMaster(filePath) {
     const workbook = XLSX.readFile(filePath);
@@ -45,7 +61,7 @@ class ConverterService {
   }
 
   /**
-   * Read Fleet Excel
+   * Read Fleet Excel (.xlsx)
    */
   readFleet(filePath) {
     const workbook = XLSX.readFile(filePath);
@@ -59,59 +75,83 @@ class ConverterService {
   }
 
   /**
-   * Create CardNumber Lookup Map
+   * Build Master Lookup
+   *
+   * Key = CardNumber
+   * Value = VehicleNumber + VehicleCode
    */
   buildMasterMap(master) {
     const map = new Map();
 
-    master.forEach((row) => {
+    for (const row of master) {
       const cardNumber = String(row.CardNumber || "").trim();
 
-      if (!cardNumber) return;
+      if (!cardNumber) continue;
+
+      if (map.has(cardNumber)) {
+        console.warn(`Duplicate CardNumber: ${cardNumber}`);
+      }
 
       map.set(cardNumber, {
-        vehicleNumber: row.VehicleNumber,
-        vehicleCode: row.VehicleCode,
+        vehicleNumber: String(row.VehicleNumber || "").trim(),
+        vehicleCode: String(row.VehicleCode || "").trim(),
       });
-    });
+    }
 
     return map;
   }
 
   /**
-   * Convert Fleet Rows
+   * Convert Fleet -> CSV
    */
   convertRows({ fleet, masterMap, vehicleField }) {
-    const output = [];
+    try {
+      const rows = [];
+      const missingCards = [];
 
-    // Skip Header
-    for (let i = 1; i < fleet.length; i++) {
-      const row = fleet[i];
+      // Skip Header
+      for (let i = 1; i < fleet.length; i++) {
+        const row = fleet[i];
 
-      if (!row || row.length === 0) continue;
+        if (!row || row.length === 0) continue;
 
-      // ===== Fleet Mapping =====
-      const date = row[5]; // F
-      const time = row[6]; // G
-      const cardNumber = String(row[7] || "").trim(); // H (ปรับตามจริง)
-      const columnAA = row[26]; // AA
+        const date = row[FLEET_COLUMNS.DATE];
+        const time = row[FLEET_COLUMNS.TIME];
+        const cardNumber = String(row[FLEET_COLUMNS.CARD_NUMBER] || "").trim();
+        const amount = row[FLEET_COLUMNS.AMOUNT];
 
-      const master = masterMap.get(cardNumber);
+        // Skip invalid row
+        if (!date || !time || !cardNumber) continue;
 
-      if (!master) continue;
+        const master = masterMap.get(cardNumber);
 
-      output.push([
-        `${date} ${time}`,
-        vehicleField === "VehicleCode"
-          ? master.vehicleCode
-          : master.vehicleNumber,
-        1,
-        11,
-        columnAA,
-      ]);
+        if (!master) {
+          missingCards.push({
+            row: i + 1,
+            cardNumber,
+          });
+
+          continue;
+        }
+
+        rows.push([
+          `${date} ${time}`,
+          vehicleField === "vehicleCode"
+            ? master.vehicleCode
+            : master.vehicleNumber,
+          1,
+          11,
+          amount,
+        ]);
+      }
+
+      return {
+        rows,
+        missingCards,
+      };
+    } catch (e) {
+      console.error("Error in convertRows:", e);
     }
-
-    return output;
   }
 
   /**

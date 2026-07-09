@@ -114,7 +114,9 @@ class ConverterService {
         const date = row[FLEET_COLUMNS.DATE];
         const time = row[FLEET_COLUMNS.TIME];
         const cardNumber = String(row[FLEET_COLUMNS.CARD_NUMBER] || "").trim();
-        const amount = Math.floor(row[FLEET_COLUMNS.AMOUNT] * 100) || 0;
+        const amount = String(
+          Math.floor(row[FLEET_COLUMNS.AMOUNT] * 100) || 0,
+        ).padStart(9, "0");
 
         // Skip invalid row
         if (!date || !time || !cardNumber) continue;

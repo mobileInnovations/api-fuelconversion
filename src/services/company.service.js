@@ -73,7 +73,6 @@ exports.getCompanyById = async (id) => {
 };
 
 exports.getCompanyByCode = async (companyCode) => {
-  console.log("companyCode:", companyCode);
   try {
     const sql = "SELECT * FROM companies WHERE company_code = ?";
     const rows = await db.query(sql, [companyCode]);

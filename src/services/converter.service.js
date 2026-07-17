@@ -176,7 +176,7 @@ class ConverterService {
           .map((value) => `"${String(value ?? "").replace(/"/g, '""')}"`)
           .join(","),
       )
-      .join("\n");
+      .join("\r\n");
 
     fs.mkdirSync(path.dirname(outputFile), {
       recursive: true,
